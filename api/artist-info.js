@@ -12,16 +12,19 @@ const GENRE_SEEDS = {
 };
 
 async function getSpotifyToken() {
-  const creds = btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`);
+  const params = new URLSearchParams();
+  params.append('grant_type', 'client_credentials');
+  params.append('client_id', SPOTIFY_CLIENT_ID);
+  params.append('client_secret', SPOTIFY_CLIENT_SECRET);
+
   const r = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
-    headers: {
-      'Authorization': `Basic ${creds}`,
-      'Content-Type': 'application/x-www-form-urlencoded',
-    },
-    body: 'grant_type=client_credentials',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
   });
-  const d = await r.json();
+  const text = await r.text();
+  let d;
+  try { d = JSON.parse(text); } catch(e) { throw new Error('Spotify token parse error: ' + text.slice(0, 100)); }
   if (!d.access_token) throw new Error('Spotify auth failed: ' + JSON.stringify(d));
   return d.access_token;
 }
@@ -93,9 +96,8 @@ ${text.slice(0, 1000)}`,
   const d = await r.json();
   const raw = d.choices?.[0]?.message?.content || '{}';
   const clean = raw.replace(/```json|```/g, '').trim();
-  try {
-    return JSON.parse(clean);
-  } catch { return { debut: '', bio: '' }; }
+  try { return JSON.parse(clean); }
+  catch { return { debut: '', bio: '' }; }
 }
 
 export default async function handler(req, res) {
