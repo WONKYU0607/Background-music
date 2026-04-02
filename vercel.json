@@ -1,7 +1,1 @@
-{
-  "functions": {
-    "api/artist-info.js": {
-      "runtime": "nodejs20.x"
-    }
-  }
-}
+{}
