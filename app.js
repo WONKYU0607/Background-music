@@ -151,15 +151,29 @@ function renderArtistInfo(artistName, imageUrl, info) {
   const songsList = document.getElementById('songs-list');
   songsList.innerHTML = '';
   (info.songs || []).forEach(song => {
-    const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(song.youtube_query);
+    const ytQuery = song.youtube_query || (song.title);
+    const ytmQuery = song.youtube_music_query || song.title;
+    const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(ytQuery);
+    const ytmUrl = 'https://music.youtube.com/search?q=' + encodeURIComponent(ytmQuery);
     const item = document.createElement('div');
     item.className = 'song-item';
     item.innerHTML = `
       <span class="song-title">${song.title}</span>
-      <a class="yt-btn" href="${ytUrl}" target="_blank">
-        <span class="yt-icon"></span>
-        <span class="yt-btn-label">${t('listen')}</span>
-      </a>
+      <div style="display:flex;gap:6px;flex-shrink:0;">
+        <a class="yt-btn" href="${ytUrl}" target="_blank" title="YouTube">
+          <svg width="18" height="13" viewBox="0 0 18 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.6 2.03C17.4 1.27 16.8 0.67 16.04 0.47 14.63 0.1 9 0.1 9 0.1S3.37 0.1 1.96 0.47C1.2 0.67 0.6 1.27 0.4 2.03 0.03 3.44 0.03 6.5 0.03 6.5S0.03 9.56 0.4 10.97C0.6 11.73 1.2 12.33 1.96 12.53 3.37 12.9 9 12.9 9 12.9S14.63 12.9 16.04 12.53C16.8 12.33 17.4 11.73 17.6 10.97 17.97 9.56 17.97 6.5 17.97 6.5S17.97 3.44 17.6 2.03Z" fill="white"/>
+            <path d="M7.2 9.26L11.84 6.5 7.2 3.74V9.26Z" fill="#FF0000"/>
+          </svg>
+        </a>
+        <a class="ytm-btn" href="${ytmUrl}" target="_blank" title="YouTube Music">
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="9" cy="9" r="9" fill="white"/>
+            <circle cx="9" cy="9" r="3.5" fill="#FF0000"/>
+            <path d="M9 1.5C4.86 1.5 1.5 4.86 1.5 9C1.5 13.14 4.86 16.5 9 16.5C13.14 16.5 16.5 13.14 16.5 9C16.5 4.86 13.14 1.5 9 1.5ZM9 2.5C12.59 2.5 15.5 5.41 15.5 9C15.5 12.59 12.59 15.5 9 15.5C5.41 15.5 2.5 12.59 2.5 9C2.5 5.41 5.41 2.5 9 2.5Z" fill="#FF0000"/>
+          </svg>
+        </a>
+      </div>
     `;
     songsList.appendChild(item);
   });
