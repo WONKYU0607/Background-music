@@ -36,6 +36,7 @@ const LANGUAGES = [
 let currentLang = 'ko';
 let currentGenre = 'all';
 let isLoading = false;
+let currentArtistName = null;
 
 function t(key) {
   return UI_TEXT[currentLang]?.[key] || UI_TEXT['en'][key];
@@ -64,11 +65,15 @@ function setGenre(id) {
   renderGenreTabs();
 }
 
-function setLang(id) {
+async function setLang(id) {
   currentLang = id;
   renderLangTabs();
   renderGenreTabs();
   updateUIText();
+  // 현재 아티스트가 있으면 해당 언어로 정보 다시 불러오기
+  if (currentArtistName) {
+    await reloadArtistInfo(currentArtistName);
+  }
 }
 
 function updateUIText() {
@@ -100,25 +105,93 @@ async function getTopArtistByGenre(genre) {
 }
 
 async function getArtistImage(artistName) {
-  const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(artistName)}&api_key=${LASTFM_KEY}&format=json`;
-  const res = await fetch(url);
-  const data = await res.json();
-  const images = data?.artist?.image;
-  if (!images) return null;
-  const mega = images.find(i => i.size === 'mega');
-  const extralarge = images.find(i => i.size === 'extralarge');
-  const img = mega?.['#text'] || extralarge?.['#text'] || null;
-  return img && img !== '' ? img : null;
+  try {
+    const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(artistName)}&api_key=${LASTFM_KEY}&format=json`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const images = data?.artist?.image;
+    if (!images || !images.length) return null;
+    // 가장 큰 이미지부터 순서대로 시도
+    const sizes = ['mega', 'extralarge', 'large', 'medium'];
+    for (const size of sizes) {
+      const found = images.find(i => i.size === size);
+      if (found && found['#text'] && found['#text'].trim() !== '') {
+        return found['#text'];
+      }
+    }
+    return null;
+  } catch (e) {
+    return null;
+  }
 }
 
-async function getArtistInfoFromClaude(artistName) {
+async function getArtistInfoFromAPI(artistName) {
   const res = await fetch('/api/artist-info', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ artistName, language: currentLang }),
   });
-  if (!res.ok) throw new Error('Claude API error');
+  if (!res.ok) throw new Error('API error');
   return await res.json();
+}
+
+function renderArtistInfo(artistName, imageUrl, info) {
+  const heroEl = document.getElementById('artist-hero-inner');
+  if (imageUrl) {
+    heroEl.innerHTML = `<img src="${imageUrl}" alt="${artistName}" style="width:100%;height:100%;object-fit:cover;opacity:0.85;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e)\\'>🎤</div>'">`;
+  } else {
+    heroEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e);">🎤</div>`;
+  }
+
+  document.getElementById('artist-name').textContent = artistName;
+  document.getElementById('artist-genre').textContent = GENRES.find(g => g.id === currentGenre)?.label[currentLang] || currentGenre;
+  document.getElementById('info-debut').textContent = info.debut || '';
+  document.getElementById('info-bio').textContent = info.bio || '';
+
+  const songsList = document.getElementById('songs-list');
+  songsList.innerHTML = '';
+  (info.songs || []).forEach(song => {
+    const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(song.youtube_query);
+    const item = document.createElement('div');
+    item.className = 'song-item';
+    item.innerHTML = `
+      <span class="song-title">${song.title}</span>
+      <a class="yt-btn" href="${ytUrl}" target="_blank">
+        <span class="yt-icon"></span>
+        <span class="yt-btn-label">${t('listen')}</span>
+      </a>
+    `;
+    songsList.appendChild(item);
+  });
+
+  document.getElementById('content-area').style.display = 'flex';
+}
+
+// 언어 바뀔 때 현재 아티스트 정보만 다시 불러오기 (사진은 유지)
+async function reloadArtistInfo(artistName) {
+  if (isLoading) return;
+  isLoading = true;
+
+  const overlay = document.getElementById('loading-overlay');
+  const loadingText = document.getElementById('loading-text');
+  overlay.style.display = 'flex';
+  loadingText.textContent = t('loading');
+
+  try {
+    const info = await getArtistInfoFromAPI(artistName);
+    const currentImg = document.getElementById('artist-hero-inner').querySelector('img');
+    const imageUrl = currentImg ? currentImg.src : null;
+    renderArtistInfo(artistName, imageUrl, info);
+    updateUIText();
+  } catch (e) {
+    loadingText.textContent = t('error');
+    setTimeout(() => { overlay.style.display = 'none'; }, 2000);
+    isLoading = false;
+    return;
+  }
+
+  overlay.style.display = 'none';
+  isLoading = false;
 }
 
 async function loadArtist() {
@@ -136,41 +209,14 @@ async function loadArtist() {
   try {
     const artist = await getTopArtistByGenre(currentGenre);
     const artistName = artist.name;
+    currentArtistName = artistName;
 
-    const [imageUrl, claudeInfo] = await Promise.all([
+    const [imageUrl, info] = await Promise.all([
       getArtistImage(artistName),
-      getArtistInfoFromClaude(artistName),
+      getArtistInfoFromAPI(artistName),
     ]);
 
-    const heroEl = document.getElementById('artist-hero-inner');
-    if (imageUrl) {
-      heroEl.innerHTML = `<img src="${imageUrl}" alt="${artistName}" style="width:100%;height:100%;object-fit:cover;opacity:0.85;" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e;\\'>🎤</div>'">`;
-    } else {
-      heroEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e);">🎤</div>`;
-    }
-
-    document.getElementById('artist-name').textContent = artistName;
-    document.getElementById('artist-genre').textContent = GENRES.find(g => g.id === currentGenre)?.label[currentLang] || currentGenre;
-    document.getElementById('info-debut').textContent = claudeInfo.debut || '';
-    document.getElementById('info-bio').textContent = claudeInfo.bio || '';
-
-    const songsList = document.getElementById('songs-list');
-    songsList.innerHTML = '';
-    (claudeInfo.songs || []).forEach(song => {
-      const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(song.youtube_query);
-      const item = document.createElement('div');
-      item.className = 'song-item';
-      item.innerHTML = `
-        <span class="song-title">${song.title}</span>
-        <a class="yt-btn" href="${ytUrl}" target="_blank">
-          <span class="yt-icon"></span>
-          <span class="yt-btn-label">${t('listen')}</span>
-        </a>
-      `;
-      songsList.appendChild(item);
-    });
-
-    contentArea.style.display = 'flex';
+    renderArtistInfo(artistName, imageUrl, info);
     overlay.style.display = 'none';
   } catch (e) {
     loadingText.textContent = t('error');
