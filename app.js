@@ -211,10 +211,8 @@ async function loadArtist() {
     const artistName = artist.name;
     currentArtistName = artistName;
 
-    const [imageUrl, info] = await Promise.all([
-      getArtistImage(artistName),
-      getArtistInfoFromAPI(artistName),
-    ]);
+    const info = await getArtistInfoFromAPI(artistName);
+    const imageUrl = info.imageUrl || null;
 
     renderArtistInfo(artistName, imageUrl, info);
     overlay.style.display = 'none';
