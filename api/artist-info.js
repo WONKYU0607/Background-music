@@ -20,7 +20,7 @@ export default async function handler(req, res) {
   const langLabel = langMap[language] || 'English';
 
   const prompt = `You are a music expert. Provide information about the artist "${artistName}" in ${langLabel}.
-Respond ONLY with a valid JSON object, no markdown, no code blocks.
+Respond ONLY with a valid JSON object, no markdown, no code blocks, no extra text.
 
 {
   "debut": "debut year and career history, 2-3 sentences",
@@ -35,22 +35,24 @@ Respond ONLY with a valid JSON object, no markdown, no code blocks.
 Use real song titles. All text fields must be in ${langLabel}.`;
 
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'llama-3.3-70b-versatile',
         max_tokens: 1000,
-        messages: [{ role: 'user', content: prompt }],
+        messages: [
+          { role: 'system', content: 'You are a music expert. Always respond with valid JSON only, no markdown, no code blocks.' },
+          { role: 'user', content: prompt }
+        ],
       }),
     });
 
     const data = await response.json();
-    const text = data.content.map((b) => b.text || '').join('');
+    const text = data.choices?.[0]?.message?.content || '';
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
