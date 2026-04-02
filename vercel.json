@@ -1,6 +1,13 @@
 {
   "version": 2,
   "builds": [
-    { "src": "api/artist-info.js", "use": "@vercel/node" }
+    { "src": "api/artist-info.js", "use": "@vercel/node" },
+    { "src": "*.html", "use": "@vercel/static" },
+    { "src": "*.js", "use": "@vercel/static" },
+    { "src": "*.json", "use": "@vercel/static" }
+  ],
+  "routes": [
+    { "src": "/api/artist-info", "dest": "/api/artist-info.js" },
+    { "src": "/(.*)", "dest": "/$1" }
   ]
 }
