@@ -28,22 +28,13 @@ async function getSpotifyToken() {
 
 async function getRandomFamousArtist(genre, token) {
   const genreTag = GENRE_SEEDS[genre] || 'pop';
-  // offset 랜덤으로 다양한 아티스트 뽑기 (popularity 60 이상만)
-  const offset = Math.floor(Math.random() * 500);
+  // 한 번만 호출, offset 0~9 랜덤 (popularity 기준 상위권)
+  const offset = Math.floor(Math.random() * 10) * 50;
   const url = `https://api.spotify.com/v1/search?q=genre:${genreTag}&type=artist&limit=50&offset=${offset}`;
   const r = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
   const d = await r.json();
-  const artists = (d?.artists?.items || []).filter(a => a.popularity >= 60 && a.followers?.total >= 500000);
-  if (!artists.length) {
-    // fallback: offset 0, popularity 50 이상
-    const r2 = await fetch(`https://api.spotify.com/v1/search?q=genre:${genreTag}&type=artist&limit=50&offset=0`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-    });
-    const d2 = await r2.json();
-    const fallback = (d2?.artists?.items || []).filter(a => a.popularity >= 50);
-    if (!fallback.length) throw new Error('No artists found');
-    return fallback[Math.floor(Math.random() * fallback.length)];
-  }
+  const artists = (d?.artists?.items || []).filter(a => a.popularity >= 55);
+  if (!artists.length) throw new Error('No artists found');
   return artists[Math.floor(Math.random() * artists.length)];
 }
 
