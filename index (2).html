@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MusicCard</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0f0f23" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body { height: 100%; background: #0f0f23; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; overflow: hidden; }
+
+    .app {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: linear-gradient(180deg, #0f0f23 0%, #1a1a3e 100%);
+      color: #fff;
+      overflow: hidden;
+    }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 20px 4px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+      flex-shrink: 0;
+    }
+
+    /* Settings row */
+    .settings-row {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px 16px 8px;
+      flex-shrink: 0;
+    }
+
+    .setting-line {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .setting-label {
+      font-size: 10px;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      min-width: 28px;
+      flex-shrink: 0;
+    }
+
+    .tabs-scroll {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+    .tabs-scroll::-webkit-scrollbar { display: none; }
+
+    .genre-tab, .lang-tab {
+      flex-shrink: 0;
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 0.5px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      color: rgba(255,255,255,0.5);
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .genre-tab.active, .lang-tab.active {
+      background: rgba(255,255,255,0.18);
+      color: #fff;
+      border-color: rgba(255,255,255,0.35);
+    }
+
+    /* Artist hero */
+    .artist-hero {
+      position: relative;
+      flex-shrink: 0;
+      height: 200px;
+      overflow: hidden;
+    }
+
+    #artist-hero-inner {
+      width: 100%;
+      height: 100%;
+    }
+
+    .artist-overlay {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      padding: 16px 20px 12px;
+      background: linear-gradient(0deg, rgba(15,15,35,0.95) 0%, transparent 100%);
+    }
+
+    .artist-name {
+      font-size: 22px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .artist-genre-tag {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-top: 2px;
+    }
+
+    /* Content */
+    .content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      scrollbar-width: none;
+    }
+    .content-area::-webkit-scrollbar { display: none; }
+
+    .info-card {
+      background: rgba(255,255,255,0.06);
+      border-radius: 14px;
+      padding: 12px 14px;
+      border: 0.5px solid rgba(255,255,255,0.1);
+    }
+
+    .info-label {
+      font-size: 10px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.35);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-bottom: 6px;
+    }
+
+    .info-text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.82);
+      line-height: 1.6;
+    }
+
+    .songs-list { display: flex; flex-direction: column; gap: 6px; }
+
+    .song-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 7px 0;
+      border-bottom: 0.5px solid rgba(255,255,255,0.07);
+    }
+    .song-item:last-child { border-bottom: none; }
+
+    .song-title { font-size: 13px; color: rgba(255,255,255,0.82); flex: 1; margin-right: 8px; }
+
+    .yt-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: #FF0000;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .yt-icon {
+      width: 14px; height: 10px;
+      background: #fff;
+      border-radius: 2px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .yt-icon::after {
+      content: '';
+      position: absolute;
+      left: 50%; top: 50%;
+      transform: translate(-40%, -50%);
+      border-left: 5px solid #FF0000;
+      border-top: 3px solid transparent;
+      border-bottom: 3px solid transparent;
+    }
+
+    /* Bottom */
+    .bottom-section {
+      padding: 10px 16px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    #load-btn {
+      width: 100%;
+      padding: 13px;
+      border-radius: 14px;
+      border: 0.5px solid rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.2s;
+    }
+    #load-btn:active { background: rgba(255,255,255,0.15); }
+
+    .slide-hint {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: rgba(255,255,255,0.25);
+      font-size: 11px;
+    }
+    .slide-line { flex: 1; height: 0.5px; background: rgba(255,255,255,0.12); }
+
+    /* Loading overlay */
+    #loading-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,35,0.92);
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 14px;
+      z-index: 100;
+    }
+
+    .spinner {
+      width: 34px; height: 34px;
+      border: 2px solid rgba(255,255,255,0.1);
+      border-top: 2px solid rgba(255,255,255,0.75);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #loading-text { color: rgba(255,255,255,0.55); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <div class="status-bar">
+      <span id="status-time">9:41</span>
+      <span style="font-size:10px;">● ● ●</span>
+    </div>
+
+    <div class="settings-row">
+      <div class="setting-line">
+        <span class="setting-label" id="genre-label">장르</span>
+        <div class="tabs-scroll" id="genre-tabs"></div>
+      </div>
+      <div class="setting-line">
+        <span class="setting-label" id="lang-label">언어</span>
+        <div class="tabs-scroll" id="lang-tabs"></div>
+      </div>
+    </div>
+
+    <div class="artist-hero">
+      <div id="artist-hero-inner">
+        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e);">🎤</div>
+      </div>
+      <div class="artist-overlay">
+        <div class="artist-name" id="artist-name">MusicCard</div>
+        <div class="artist-genre-tag" id="artist-genre">아래 버튼을 눌러 아티스트를 불러오세요</div>
+      </div>
+    </div>
+
+    <div class="content-area" id="content-area" style="display:none;">
+      <div class="info-card">
+        <div class="info-label" id="label-debut">데뷔 & 이력</div>
+        <div class="info-text" id="info-debut"></div>
+      </div>
+      <div class="info-card">
+        <div class="info-label" id="label-bio">아티스트 소개</div>
+        <div class="info-text" id="info-bio"></div>
+      </div>
+      <div class="info-card">
+        <div class="info-label" id="label-songs">대표곡 & 듣기</div>
+        <div class="songs-list" id="songs-list"></div>
+      </div>
+    </div>
+
+    <div class="bottom-section">
+      <button id="load-btn" onclick="loadArtist()">새 아티스트 불러오기</button>
+      <div class="slide-hint">
+        <div class="slide-line"></div>
+        <span id="slide-hint-text">밀어서 잠금해제</span>
+        <div class="slide-line"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="loading-overlay">
+    <div class="spinner"></div>
+    <p id="loading-text">아티스트 정보 불러오는 중...</p>
+  </div>
+
+  <script src="/app.js"></script>
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      document.getElementById('status-time').textContent = `${h}:${m}`;
+    }
+    updateClock();
+    setInterval(updateClock, 1000);
+  </script>
+</body>
+</html>
