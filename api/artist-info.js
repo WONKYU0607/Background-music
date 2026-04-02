@@ -22,19 +22,18 @@ async function getSpotifyToken() {
     body: 'grant_type=client_credentials',
   });
   const d = await r.json();
-  if (!d.access_token) throw new Error('Spotify auth failed');
+  if (!d.access_token) throw new Error('Spotify auth failed: ' + JSON.stringify(d));
   return d.access_token;
 }
 
 async function getRandomFamousArtist(genre, token) {
   const genreTag = GENRE_SEEDS[genre] || 'pop';
-  // 한 번만 호출, offset 0~9 랜덤 (popularity 기준 상위권)
   const offset = Math.floor(Math.random() * 10) * 50;
   const url = `https://api.spotify.com/v1/search?q=genre:${genreTag}&type=artist&limit=50&offset=${offset}`;
   const r = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
   const d = await r.json();
   const artists = (d?.artists?.items || []).filter(a => a.popularity >= 55);
-  if (!artists.length) throw new Error('No artists found');
+  if (!artists.length) throw new Error('No artists found for genre: ' + genreTag);
   return artists[Math.floor(Math.random() * artists.length)];
 }
 
@@ -111,21 +110,16 @@ export default async function handler(req, res) {
   const langLabel = langMap[language] || 'English';
 
   try {
-    // 1. Spotify 토큰
     const token = await getSpotifyToken();
-
-    // 2. 유명 아티스트 선택 (Spotify popularity 기준)
     const artist = await getRandomFamousArtist(genre || 'pop', token);
     const artistName = artist.name;
     const imageUrl = artist.images?.[0]?.url || null;
 
-    // 3. Top tracks + Wikipedia 병렬 호출
     const [songs, wikiText] = await Promise.all([
       getTopTracks(artist.id, artistName, token),
       getWikipediaSummary(artistName),
     ]);
 
-    // 4. Groq으로 번역/요약만
     const info = await translateWithGroq(wikiText, artistName, langLabel);
 
     res.status(200).json({
@@ -136,6 +130,6 @@ export default async function handler(req, res) {
       imageUrl,
     });
   } catch (e) {
-    res.status(500).json({ error: 'Failed', detail: e.message });
+    res.status(500).json({ error: e.message, detail: e.stack });
   }
 }
