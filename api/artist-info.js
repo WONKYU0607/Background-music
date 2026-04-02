@@ -19,20 +19,35 @@ export default async function handler(req, res) {
 
   const langLabel = langMap[language] || 'English';
 
-  const prompt = `You are a music expert. Provide information about the artist "${artistName}" in ${langLabel}.
-Respond ONLY with a valid JSON object, no markdown, no code blocks, no extra text.
+  // Wikipedia에서 아티스트 이미지 가져오기
+  async function getWikipediaImage(name) {
+    try {
+      const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`;
+      const r = await fetch(url);
+      const d = await r.json();
+      return d?.thumbnail?.source || d?.originalimage?.source || null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  const imageUrl = await getWikipediaImage(artistName);
+
+  const prompt = `You are a music expert. Provide information about the artist "${artistName}".
+You MUST write ALL text fields entirely in ${langLabel}. Do NOT mix in any other language, Chinese characters, Arabic, or romanized text.
+Respond ONLY with a valid JSON object. No markdown, no code blocks, no extra text outside the JSON.
 
 {
-  "debut": "debut year and career history, 2-3 sentences",
-  "bio": "artist characteristics, music style, awards, 2-3 sentences",
+  "debut": "2-3 sentences about debut year and career history, written entirely in ${langLabel}",
+  "bio": "2-3 sentences about music style, characteristics and awards, written entirely in ${langLabel}",
   "songs": [
-    {"title": "song title 1", "youtube_query": "${artistName} song title 1 official"},
-    {"title": "song title 2", "youtube_query": "${artistName} song title 2 official"},
-    {"title": "song title 3", "youtube_query": "${artistName} song title 3 official"}
+    {"title": "real song title 1", "youtube_query": "${artistName} real song title 1 official MV"},
+    {"title": "real song title 2", "youtube_query": "${artistName} real song title 2 official MV"},
+    {"title": "real song title 3", "youtube_query": "${artistName} real song title 3 official MV"}
   ]
 }
 
-Use real song titles. All text fields must be in ${langLabel}.`;
+Important: Use only real, existing song titles. Every word in "debut" and "bio" must be in ${langLabel} only.`;
 
   try {
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -45,7 +60,10 @@ Use real song titles. All text fields must be in ${langLabel}.`;
         model: 'llama-3.3-70b-versatile',
         max_tokens: 1000,
         messages: [
-          { role: 'system', content: 'You are a music expert. Always respond with valid JSON only, no markdown, no code blocks.' },
+          {
+            role: 'system',
+            content: `You are a music expert. Always respond with valid JSON only. Write all descriptive text fields strictly in ${langLabel} with no other languages mixed in.`
+          },
           { role: 'user', content: prompt }
         ],
       }),
@@ -56,7 +74,7 @@ Use real song titles. All text fields must be in ${langLabel}.`;
     const clean = text.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
-    res.status(200).json(parsed);
+    res.status(200).json({ ...parsed, imageUrl });
   } catch (e) {
     res.status(500).json({ error: 'Failed to fetch artist info', detail: e.message });
   }
