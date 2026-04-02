@@ -3,7 +3,7 @@ const SPOTIFY_CLIENT_ID = 'a59a086013264e74bf476425dfa3579c';
 const SPOTIFY_CLIENT_SECRET = '1512309451e04aa09707a3de58de79f2';
 
 async function getSpotifyToken() {
-  const creds = Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64');
+  const creds = btoa(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`);
   const r = await fetch('https://accounts.spotify.com/api/token', {
     method: 'POST',
     headers: { 'Authorization': `Basic ${creds}`, 'Content-Type': 'application/x-www-form-urlencoded' },
