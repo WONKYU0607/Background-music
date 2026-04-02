@@ -1,42 +1,37 @@
-const LASTFM_KEY = '7baf30c47f469a44767a435eda336653';
-
 const GENRES = [
-  { id: 'all', label: { ko: '전체', en: 'All', ja: 'すべて', zh: '全部', es: 'Todo', fr: 'Tout' } },
-  { id: 'k-pop', label: { ko: 'K-POP', en: 'K-POP', ja: 'K-POP', zh: 'K-POP', es: 'K-POP', fr: 'K-POP' } },
-  { id: 'pop', label: { ko: '팝', en: 'Pop', ja: 'ポップ', zh: '流行', es: 'Pop', fr: 'Pop' } },
-  { id: 'rock', label: { ko: '록', en: 'Rock', ja: 'ロック', zh: '摇滚', es: 'Rock', fr: 'Rock' } },
-  { id: 'hip-hop', label: { ko: '힙합', en: 'Hip-Hop', ja: 'ヒップホップ', zh: '嘻哈', es: 'Hip-Hop', fr: 'Hip-Hop' } },
-  { id: 'r-b', label: { ko: 'R&B', en: 'R&B', ja: 'R&B', zh: 'R&B', es: 'R&B', fr: 'R&B' } },
-  { id: 'electronic', label: { ko: '일렉트로닉', en: 'Electronic', ja: 'エレクトロニック', zh: '电子', es: 'Electrónica', fr: 'Électronique' } },
-  { id: 'jazz', label: { ko: '재즈', en: 'Jazz', ja: 'ジャズ', zh: '爵士', es: 'Jazz', fr: 'Jazz' } },
-  { id: 'classical', label: { ko: '클래식', en: 'Classical', ja: 'クラシック', zh: '古典', es: 'Clásica', fr: 'Classique' } },
-  { id: 'indie', label: { ko: '인디', en: 'Indie', ja: 'インディー', zh: '独立', es: 'Indie', fr: 'Indé' } },
-  { id: 'metal', label: { ko: '메탈', en: 'Metal', ja: 'メタル', zh: '金属', es: 'Metal', fr: 'Métal' } },
-  { id: 'country', label: { ko: '컨트리', en: 'Country', ja: 'カントリー', zh: '乡村', es: 'Country', fr: 'Country' } },
+  { id: 'pop',     label: { en: 'Pop',     ko: '팝',    ja: 'ポップ',       zh: '流行',  es: 'Pop',      fr: 'Pop'      } },
+  { id: 'k-pop',   label: { en: 'K-Pop',   ko: 'K-POP', ja: 'K-POP',       zh: 'K-POP', es: 'K-Pop',    fr: 'K-Pop'    } },
+  { id: 'hip-hop', label: { en: 'Hip-Hop', ko: '힙합',  ja: 'ヒップホップ', zh: '嘻哈',  es: 'Hip-Hop',  fr: 'Hip-Hop'  } },
+  { id: 'r-b',     label: { en: 'R&B',     ko: 'R&B',   ja: 'R&B',         zh: 'R&B',   es: 'R&B',      fr: 'R&B'      } },
+  { id: 'band',    label: { en: 'Band',    ko: '밴드',  ja: 'バンド',       zh: '乐队',  es: 'Banda',    fr: 'Groupe'   } },
+  { id: 'jazz',    label: { en: 'Jazz',    ko: '재즈',  ja: 'ジャズ',       zh: '爵士',  es: 'Jazz',     fr: 'Jazz'     } },
+  { id: 'reggae',  label: { en: 'Reggae',  ko: '레게',  ja: 'レゲエ',       zh: '雷鬼',  es: 'Reggae',   fr: 'Reggae'   } },
 ];
 
 const UI_TEXT = {
-  ko: { title: '오늘의 아티스트', loadBtn: '새 아티스트 불러오기', slide: '밀어서 잠금해제', debut: '데뷔 & 이력', bio: '아티스트 소개', songs: '대표곡 & 듣기', listen: '듣기', loading: '아티스트 정보 불러오는 중...', error: '오류가 발생했어요. 다시 시도해주세요.', genre: '장르', lang: '언어' },
-  en: { title: "Today's Artist", loadBtn: 'Load New Artist', slide: 'Slide to unlock', debut: 'Debut & Career', bio: 'About', songs: 'Top Songs', listen: 'Play', loading: 'Loading artist info...', error: 'Error occurred. Please try again.', genre: 'Genre', lang: 'Language' },
-  ja: { title: '今日のアーティスト', loadBtn: '新しいアーティスト', slide: 'スライドでロック解除', debut: 'デビュー＆経歴', bio: 'アーティスト紹介', songs: '代表曲', listen: '聴く', loading: 'アーティスト情報を読み込み中...', error: 'エラーが発生しました。', genre: 'ジャンル', lang: '言語' },
-  zh: { title: '今日艺术家', loadBtn: '加载新艺术家', slide: '滑动解锁', debut: '出道 & 经历', bio: '艺术家介绍', songs: '代表歌曲', listen: '听', loading: '正在加载艺术家信息...', error: '发生错误，请重试。', genre: '流派', lang: '语言' },
-  es: { title: 'Artista del día', loadBtn: 'Cargar nuevo artista', slide: 'Desliza para desbloquear', debut: 'Debut & Carrera', bio: 'Sobre el artista', songs: 'Canciones principales', listen: 'Escuchar', loading: 'Cargando información...', error: 'Error. Inténtalo de nuevo.', genre: 'Género', lang: 'Idioma' },
-  fr: { title: "Artiste du jour", loadBtn: 'Nouvel artiste', slide: 'Glisser pour déverrouiller', debut: 'Débuts & Carrière', bio: "À propos", songs: 'Meilleures chansons', listen: 'Écouter', loading: 'Chargement...', error: 'Erreur. Réessayez.', genre: 'Genre', lang: 'Langue' },
+  en: { loadBtn: 'New Artist',     slide: 'Slide to unlock', debut: 'Career',        bio: 'Did You Know?', songs: 'Top Songs',      listen: 'YT',  loading: 'Loading artist...', error: 'Error. Please try again.', genre: 'Genre', lang: 'Lang' },
+  ko: { loadBtn: '새 아티스트',    slide: '밀어서 잠금해제', debut: '데뷔 & 이력',   bio: '알고 계셨나요?', songs: '대표곡',          listen: 'YT',  loading: '불러오는 중...',     error: '오류가 발생했어요.',        genre: '장르',  lang: '언어' },
+  ja: { loadBtn: '新アーティスト', slide: 'スライドで解除',  debut: 'デビュー',      bio: '豆知識',        songs: '代表曲',          listen: 'YT',  loading: '読み込み中...',      error: 'エラーが発生しました。',    genre: 'ジャンル', lang: '言語' },
+  zh: { loadBtn: '新艺术家',       slide: '滑动解锁',       debut: '出道经历',      bio: '你知道吗？',    songs: '热门歌曲',        listen: 'YT',  loading: '加载中...',          error: '发生错误，请重试。',        genre: '流派',  lang: '语言' },
+  es: { loadBtn: 'Nuevo artista',  slide: 'Desliza',        debut: 'Carrera',       bio: '¿Sabías que?',  songs: 'Canciones',       listen: 'YT',  loading: 'Cargando...',        error: 'Error. Inténtalo.',         genre: 'Género', lang: 'Idioma' },
+  fr: { loadBtn: 'Nouvel artiste', slide: 'Glisser',        debut: 'Carrière',      bio: 'Le saviez-vous ?', songs: 'Chansons',     listen: 'YT',  loading: 'Chargement...',      error: 'Erreur. Réessayez.',        genre: 'Genre', lang: 'Langue' },
 };
 
 const LANGUAGES = [
-  { id: 'ko', label: '한국어' },
   { id: 'en', label: 'English' },
+  { id: 'ko', label: '한국어' },
   { id: 'ja', label: '日本語' },
   { id: 'zh', label: '中文' },
   { id: 'es', label: 'Español' },
   { id: 'fr', label: 'Français' },
 ];
 
-let currentLang = 'ko';
-let currentGenre = 'all';
+// 설정 저장/불러오기
+let currentLang = localStorage.getItem('musiccard_lang') || 'en';
+let currentGenre = localStorage.getItem('musiccard_genre') || 'pop';
 let isLoading = false;
 let currentArtistName = null;
+let currentImageUrl = null;
 
 function t(key) {
   return UI_TEXT[currentLang]?.[key] || UI_TEXT['en'][key];
@@ -62,15 +57,16 @@ function renderLangTabs() {
 
 function setGenre(id) {
   currentGenre = id;
+  localStorage.setItem('musiccard_genre', id);
   renderGenreTabs();
 }
 
 async function setLang(id) {
   currentLang = id;
+  localStorage.setItem('musiccard_lang', id);
   renderLangTabs();
   renderGenreTabs();
   updateUIText();
-  // 현재 아티스트가 있으면 해당 언어로 정보 다시 불러오기
   if (currentArtistName) {
     await reloadArtistInfo(currentArtistName);
   }
@@ -88,57 +84,25 @@ function updateUIText() {
   listenBtns.forEach(b => b.textContent = t('listen'));
 }
 
-async function getTopArtistByGenre(genre) {
-  const tag = genre === 'all' ? '' : genre;
-  let url;
-  if (tag) {
-    const page = Math.floor(Math.random() * 5) + 1;
-    url = `https://ws.audioscrobbler.com/2.0/?method=tag.gettopartists&tag=${encodeURIComponent(tag)}&api_key=${LASTFM_KEY}&format=json&limit=50&page=${page}`;
-  } else {
-    url = `https://ws.audioscrobbler.com/2.0/?method=chart.gettopartists&api_key=${LASTFM_KEY}&format=json&limit=50`;
-  }
-  const res = await fetch(url);
-  const data = await res.json();
-  const artists = tag ? data?.topartists?.artist : data?.artists?.artist;
-  if (!artists || !artists.length) throw new Error('No artists found');
-  return artists[Math.floor(Math.random() * artists.length)];
-}
-
-async function getArtistImage(artistName) {
-  try {
-    const url = `https://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=${encodeURIComponent(artistName)}&api_key=${LASTFM_KEY}&format=json`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const images = data?.artist?.image;
-    if (!images || !images.length) return null;
-    // 가장 큰 이미지부터 순서대로 시도
-    const sizes = ['mega', 'extralarge', 'large', 'medium'];
-    for (const size of sizes) {
-      const found = images.find(i => i.size === size);
-      if (found && found['#text'] && found['#text'].trim() !== '') {
-        return found['#text'];
-      }
-    }
-    return null;
-  } catch (e) {
-    return null;
-  }
-}
-
-async function getArtistInfoFromAPI(artistName) {
+async function fetchArtistInfo(artistName, genre) {
   const res = await fetch('/api/artist-info', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ artistName, language: currentLang }),
+    body: JSON.stringify({ genre: genre || currentGenre, language: currentLang, artistName }),
   });
   if (!res.ok) throw new Error('API error');
   return await res.json();
 }
 
-function renderArtistInfo(artistName, imageUrl, info) {
+function renderArtistInfo(info) {
+  const artistName = info.artistName || currentArtistName;
+  const imageUrl = info.imageUrl || null;
+  currentArtistName = artistName;
+  currentImageUrl = imageUrl;
+
   const heroEl = document.getElementById('artist-hero-inner');
   if (imageUrl) {
-    heroEl.innerHTML = `<img src="${imageUrl}" alt="${artistName}" style="width:100%;height:100%;object-fit:cover;opacity:0.85;" onerror="this.style.display='none';this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e)\\'>🎤</div>'">`;
+    heroEl.innerHTML = `<img src="${imageUrl}" alt="${artistName}" style="width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0.95;" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e)\\'>🎤</div>'">`;
   } else {
     heroEl.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e);">🎤</div>`;
   }
@@ -151,10 +115,8 @@ function renderArtistInfo(artistName, imageUrl, info) {
   const songsList = document.getElementById('songs-list');
   songsList.innerHTML = '';
   (info.songs || []).forEach(song => {
-    const ytQuery = song.youtube_query || (song.title);
-    const ytmQuery = song.youtube_music_query || song.title;
-    const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(ytQuery);
-    const ytmUrl = 'https://music.youtube.com/search?q=' + encodeURIComponent(ytmQuery);
+    const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(song.youtube_query);
+    const ytmUrl = 'https://music.youtube.com/search?q=' + encodeURIComponent(song.youtube_music_query || song.title);
     const item = document.createElement('div');
     item.className = 'song-item';
     item.innerHTML = `
@@ -167,10 +129,10 @@ function renderArtistInfo(artistName, imageUrl, info) {
           </svg>
         </a>
         <a class="ytm-btn" href="${ytmUrl}" target="_blank" title="YouTube Music">
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="9" cy="9" r="9" fill="white"/>
-            <circle cx="9" cy="9" r="3.5" fill="#FF0000"/>
-            <path d="M9 1.5C4.86 1.5 1.5 4.86 1.5 9C1.5 13.14 4.86 16.5 9 16.5C13.14 16.5 16.5 13.14 16.5 9C16.5 4.86 13.14 1.5 9 1.5ZM9 2.5C12.59 2.5 15.5 5.41 15.5 9C15.5 12.59 12.59 15.5 9 15.5C5.41 15.5 2.5 12.59 2.5 9C2.5 5.41 5.41 2.5 9 2.5Z" fill="#FF0000"/>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="10" fill="white"/>
+            <circle cx="10" cy="10" r="4" fill="#FF0000"/>
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M10 2C5.58 2 2 5.58 2 10C2 14.42 5.58 18 10 18C14.42 18 18 14.42 18 10C18 5.58 14.42 2 10 2ZM10 3C13.87 3 17 6.13 17 10C17 13.87 13.87 17 10 17C6.13 17 3 13.87 3 10C3 6.13 6.13 3 10 3Z" fill="#FF0000"/>
           </svg>
         </a>
       </div>
@@ -181,21 +143,18 @@ function renderArtistInfo(artistName, imageUrl, info) {
   document.getElementById('content-area').style.display = 'flex';
 }
 
-// 언어 바뀔 때 현재 아티스트 정보만 다시 불러오기 (사진은 유지)
 async function reloadArtistInfo(artistName) {
   if (isLoading) return;
   isLoading = true;
-
   const overlay = document.getElementById('loading-overlay');
   const loadingText = document.getElementById('loading-text');
   overlay.style.display = 'flex';
   loadingText.textContent = t('loading');
 
   try {
-    const info = await getArtistInfoFromAPI(artistName);
-    const currentImg = document.getElementById('artist-hero-inner').querySelector('img');
-    const imageUrl = currentImg ? currentImg.src : null;
-    renderArtistInfo(artistName, imageUrl, info);
+    const info = await fetchArtistInfo(artistName, currentGenre);
+    info.imageUrl = currentImageUrl;
+    renderArtistInfo(info);
     updateUIText();
   } catch (e) {
     loadingText.textContent = t('error');
@@ -203,7 +162,6 @@ async function reloadArtistInfo(artistName) {
     isLoading = false;
     return;
   }
-
   overlay.style.display = 'none';
   isLoading = false;
 }
@@ -221,14 +179,8 @@ async function loadArtist() {
   loadingText.textContent = t('loading');
 
   try {
-    const artist = await getTopArtistByGenre(currentGenre);
-    const artistName = artist.name;
-    currentArtistName = artistName;
-
-    const info = await getArtistInfoFromAPI(artistName);
-    const imageUrl = info.imageUrl || null;
-
-    renderArtistInfo(artistName, imageUrl, info);
+    const info = await fetchArtistInfo(null, currentGenre);
+    renderArtistInfo(info);
     overlay.style.display = 'none';
   } catch (e) {
     loadingText.textContent = t('error');
