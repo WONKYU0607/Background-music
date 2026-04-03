@@ -84,14 +84,16 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { genre, language } = req.body;
+  const { genre, language, artistName: reqArtistName } = req.body;
   const langMap = { en: 'English', ko: '한국어', ja: '日本語', zh: '中文', es: 'Español', fr: 'Français' };
   const langLabel = langMap[language] || 'English';
 
   try {
-    // 1. 장르별 큐레이션된 유명 아티스트 목록에서 랜덤 선택
-    const list = GENRE_MAP[genre] || GENRE_MAP['pop'];
-    const artistName = list[Math.floor(Math.random() * list.length)];
+    // 1. 프론트에서 선택한 아티스트 사용 (로테이션 관리는 프론트에서)
+    const artistName = reqArtistName || (() => {
+      const list = GENRE_MAP[genre] || GENRE_MAP['pop'];
+      return list[Math.floor(Math.random() * list.length)];
+    })();
 
     // 2. Deezer(무인증) + Wikipedia 병렬 호출
     const [deezerData, wikiText] = await Promise.all([
