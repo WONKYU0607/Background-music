@@ -27,6 +27,48 @@ const LANGUAGES = [
 ];
 
 // 설정 저장/불러오기
+const ARTIST_LISTS = {
+  'pop':     ['Taylor Swift','Ed Sheeran','Adele','Bruno Mars','Ariana Grande','Justin Bieber','Billie Eilish','Harry Styles','Dua Lipa','The Weeknd','Katy Perry','Lady Gaga','Rihanna','Beyoncé','Sam Smith','Olivia Rodrigo','Shawn Mendes','Charlie Puth','Sia','Maroon 5','Post Malone','Selena Gomez','Justin Timberlake','Miley Cyrus','Camila Cabello','Lizzo','Halsey','Demi Lovato','Nick Jonas','Meghan Trainor','Ava Max','Carly Rae Jepsen','Jason Derulo','Bebe Rexha','Zara Larsson','Anne-Marie','James Arthur','Lewis Capaldi','Tom Grennan','JP Saxe','Conan Gray'],
+  'k-pop':   ['BTS','BLACKPINK','EXO','TWICE','Stray Kids','aespa','NewJeans','IVE','NCT 127','GOT7','BIGBANG','2NE1','SHINee','Red Velvet','ITZY','Monsta X','SEVENTEEN','TXT','IU','Psy','Super Junior','Girls Generation','f(x)','Apink','MAMAMOO','ASTRO','ATEEZ','ENHYPEN','Wanna One','IOI','KARD','CL','Taeyang','G-Dragon','Zico','Dean','pH-1','Crush','Dynamic Duo','Epik High'],
+  'hip-hop': ['Drake','Kendrick Lamar','Eminem','Jay-Z','Kanye West','Cardi B','Nicki Minaj','Post Malone','Travis Scott','J. Cole','Lil Wayne','Snoop Dogg','50 Cent','Nas','A$AP Rocky','Megan Thee Stallion','Tyler the Creator','Future','Lil Uzi Vert','21 Savage','DaBaby','Roddy Ricch','Juice WRLD','XXXTentacion','Logic','Big Sean','Wiz Khalifa','Mac Miller','Kid Cudi','Chance the Rapper','Childish Gambino','2 Chainz','Meek Mill','Rick Ross','Gucci Mane','Young Thug','Lil Baby','Gunna','Jack Harlow','Polo G'],
+  'r-b':     ['Beyoncé','Rihanna','Frank Ocean','The Weeknd','SZA','H.E.R.','Usher','Alicia Keys','John Legend','Mary J. Blige','Ne-Yo','Chris Brown','Miguel','Jhené Aiko','Khalid','Daniel Caesar','Summer Walker','Bryson Tiller','Normani','Lucky Daye','Jazmine Sullivan','Giveon','Brent Faiyaz','6LACK','Kehlani','Victoria Monét','Ella Mai','PJ Morton','Eric Bellinger','Tank','Teyana Taylor','Jeremih','Jacquees','Trey Songz','Lloyd','Omarion','Pleasure P','Mario','Ginuwine','R. Kelly'],
+  'band':    ['Coldplay','Imagine Dragons','Linkin Park','Green Day','Foo Fighters','Red Hot Chili Peppers','Arctic Monkeys','The 1975','Radiohead','Nirvana','Metallica','AC/DC','Queen','The Beatles','U2','Oasis','Muse','Twenty One Pilots','Fall Out Boy','Panic! at the Disco','My Chemical Romance','Paramore','Blink-182','Sum 41','Simple Plan','Good Charlotte','The Killers','Snow Patrol','Keane','Travis','Biffy Clyro','Placebo','The Script','Kodaline','Bastille','Alt-J','Vampire Weekend','Foster the People','Tame Impala','Glass Animals'],
+  'jazz':    ['Miles Davis','John Coltrane','Louis Armstrong','Ella Fitzgerald','Frank Sinatra','Billie Holiday','Duke Ellington','Charlie Parker','Herbie Hancock','Thelonious Monk','Chet Baker','Dave Brubeck','Nina Simone','Norah Jones','Diana Krall','John Scofield','Pat Metheny','Wynton Marsalis','Kamasi Washington','Gregory Porter','Robert Glasper','Esperanza Spalding','Cecile McLorin Salvant','Christian Scott','Ambrose Akinmusire','Mary Halvorson','Brad Mehldau','Joshua Redman','Chris Potter','Kurt Rosenwinkel','Bill Evans','Wes Montgomery','John McLaughlin','Chick Corea','McCoy Tyner','Wayne Shorter','Sonny Rollins','Dizzy Gillespie','Art Blakey','Clifford Brown'],
+  'reggae':  ['Bob Marley','Damian Marley','Shaggy','Sean Paul','Shabba Ranks','Buju Banton','Burning Spear','Toots and the Maytals','Jimmy Cliff','Steel Pulse','Ziggy Marley','Sizzla','Capleton','Beenie Man','Morgan Heritage','Lucky Dube','Peter Tosh','Bunny Wailer','Chronixx','Protoje','Koffee','Jesse Royal','Kabaka Pyramid','Jah Cure','Tarrus Riley','Etana','Romain Virgo','Busy Signal','Mavado','Alkaline','Vybz Kartel','Popcaan','Aidonia','Konshens','I-Octane','Demarco','Cecile','Ce'cile','Richie Spice','Fantan Mojah'],
+};
+
+function getNextArtist(genre) {
+  const list = ARTIST_LISTS[genre] || ARTIST_LISTS['pop'];
+  const key = `musiccard_seen_${genre}`;
+  const key_order = `musiccard_order_${genre}`;
+
+  let seen = JSON.parse(localStorage.getItem(key) || '[]');
+  let order = JSON.parse(localStorage.getItem(key_order) || '[]');
+
+  // 처음이거나 다 돌았으면 셔플해서 새 순서 만들기
+  if (order.length === 0) {
+    order = [...list].sort(() => Math.random() - 0.5);
+    seen = [];
+    localStorage.setItem(key_order, JSON.stringify(order));
+    localStorage.setItem(key, JSON.stringify(seen));
+  }
+
+  // 아직 안 나온 것 중 첫 번째
+  const next = order.find(a => !seen.includes(a));
+  if (!next) {
+    // 다 돌았으면 리셋
+    order = [...list].sort(() => Math.random() - 0.5);
+    seen = [];
+    localStorage.setItem(key_order, JSON.stringify(order));
+    localStorage.setItem(key, JSON.stringify(seen));
+    return order[0];
+  }
+
+  seen.push(next);
+  localStorage.setItem(key, JSON.stringify(seen));
+  return next;
+}
+
 let currentLang = localStorage.getItem('musiccard_lang') || 'en';
 let currentGenre = localStorage.getItem('musiccard_genre') || 'pop';
 let isLoading = false;
@@ -179,7 +221,8 @@ async function loadArtist() {
   loadingText.textContent = t('loading');
 
   try {
-    const info = await fetchArtistInfo(null, currentGenre);
+    const artistName = getNextArtist(currentGenre);
+    const info = await fetchArtistInfo(artistName, currentGenre);
     renderArtistInfo(info);
     overlay.style.display = 'none';
   } catch (e) {
