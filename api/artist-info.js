@@ -56,16 +56,28 @@ async function translateWithGroq(text, artistName, langLabel) {
       messages: [
         {
           role: 'system',
-          content: `You are a translator. Output valid JSON only. Write ALL text exclusively in ${langLabel}. Never mix languages.`,
+          content: `You are a music journalist writing for a global app. Output valid JSON only. Write ALL text exclusively in ${langLabel}. Never mix languages or writing systems.`,
         },
         {
           role: 'user',
-          content: `Summarize this Wikipedia text about "${artistName}" in ${langLabel}.
-Focus on: debut year, controversies, record-breaking facts, surprising career events.
-Return ONLY this JSON (no other text):
-{"debut":"1-2 sentences in ${langLabel} about debut and early career","bio":"2-3 sentences in ${langLabel} about most interesting/surprising facts"}
+          content: `Write about the artist "${artistName}" in ${langLabel} only. Use the Wikipedia text below as reference.
 
-Wikipedia: ${text.slice(0, 800)}`,
+"debut" field: 1-2 sentences.
+- State when and how they debuted
+- Include one surprising fact about their early beginnings
+
+"bio" field: 3-4 sentences. Make it fascinating - focus on things like:
+- How did they die or what health crisis did they face? Any conspiracy theories?
+- What inspired their most famous song? What social event or personal trauma was behind it?
+- A famous rivalry, scandal, or feud with another artist
+- A record they broke or an award controversy
+- A shocking behind-the-scenes story most fans don't know
+
+Return ONLY valid JSON, nothing else:
+{"debut":"...in ${langLabel}...","bio":"...in ${langLabel}..."}
+
+Wikipedia text:
+${text.slice(0, 1000)}`,
         },
       ],
     }),
