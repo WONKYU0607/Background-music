@@ -279,18 +279,22 @@ function renderArtistInfo(info) {
 
   var heroEl = document.getElementById('artist-hero-inner');
   if (heroEl) {
+    var initials = artistName.split(' ').map(function(w){ return w[0] || ''; }).join('').slice(0,2).toUpperCase();
+    var colorPalettes = ['135deg,#1a1a4e,#4a1a6e','135deg,#1a3a2e,#1a6e4a','135deg,#3a1a1a,#6e2a1a','135deg,#1a2a4e,#1a4a6e','135deg,#2a1a4e,#4e1a3a'];
+    var ci = artistName.charCodeAt(0) % colorPalettes.length;
+    var placeholder = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(' + colorPalettes[ci] + ');">' +
+      '<div style="width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,0.12);border:1.5px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:600;color:rgba(255,255,255,0.85);">' + initials + '</div>' +
+      '</div>';
     if (imageUrl) {
       var img = document.createElement('img');
       img.src = imageUrl;
       img.alt = artistName;
-      img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center top;opacity:0.95;';
-      img.onerror = function() {
-        heroEl.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e)">🎤</div>';
-      };
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;object-position:center 20%;opacity:0.95;';
+      img.onerror = function() { heroEl.innerHTML = placeholder; };
       heroEl.innerHTML = '';
       heroEl.appendChild(img);
     } else {
-      heroEl.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:80px;background:linear-gradient(135deg,#2d2d5e,#4a2d6e);">🎤</div>';
+      heroEl.innerHTML = placeholder;
     }
   }
 
