@@ -1,14 +1,34 @@
 const LASTFM_KEY = '7baf30c47f469a44767a435eda336653';
 
-async function getWikipediaData(artistName) {
+async function getArtistImage(artistName) {
+  // 1. Wikipedia 시도
   try {
     const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(artistName)}`);
     const d = await res.json();
-    return {
-      image: d?.thumbnail?.source || d?.originalimage?.source || null,
-      extract: d?.extract || null,
-    };
-  } catch { return { image: null, extract: null }; }
+    const img = d?.originalimage?.source || d?.thumbnail?.source || null;
+    if (img) return img;
+  } catch {}
+
+  // 2. MusicBrainz에서 아티스트 ID 찾고 Cover Art로 이미지 가져오기
+  try {
+    const mbRes = await fetch(`https://musicbrainz.org/ws/2/artist/?query=artist:${encodeURIComponent(artistName)}&limit=1&fmt=json`, {
+      headers: { 'User-Agent': 'MusicCard/1.0 (musiccard@vercel.app)' }
+    });
+    const mbData = await mbRes.json();
+    const mbId = mbData?.artists?.[0]?.id;
+    if (mbId) {
+      // Fanart.tv 대신 Wikipedia에서 MusicBrainz ID로 재검색
+      const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&titles=${encodeURIComponent(artistName)}&prop=pageimages&format=json&pithumbsize=500&origin=*`);
+      const wikiData = await wikiRes.json();
+      const pages = wikiData?.query?.pages;
+      if (pages) {
+        const page = Object.values(pages)[0];
+        if (page?.thumbnail?.source) return page.thumbnail.source;
+      }
+    }
+  } catch {}
+
+  return null;
 }
 
 async function getLastFmTopTracks(artistName) {
@@ -24,33 +44,29 @@ async function getLastFmTopTracks(artistName) {
   } catch { return []; }
 }
 
-async function generateWithGroq(artistName, wikiText, langLabel) {
-  const hasWiki = wikiText && wikiText.length > 50;
+async function generateWithGroq(artistName, langLabel) {
+  const systemPrompt = `You are a music journalist. Output valid JSON only. Write ALL text exclusively in ${langLabel}. Absolutely no mixing of any other language, script, or writing system. Every single character must be in ${langLabel}.`;
 
-  const systemPrompt = `You are a music journalist writing short, punchy content for a mobile app lockscreen.
-Output valid JSON only. Write ALL text exclusively in ${langLabel}. Never mix languages or writing systems. Zero tolerance.`;
+  const userPrompt = `Write about the music artist "${artistName}" entirely in ${langLabel}.
 
-  const userPrompt = `Write about the artist "${artistName}" in ${langLabel}.
+Do NOT translate or reference any English text. Write everything from your own knowledge in pure ${langLabel}.
 
-DEBUT field (1-2 sentences):
-- Exactly when they debuted (year, month if known)
-- One surprising or little-known fact about how they got started
+DEBUT field (1-2 sentences in ${langLabel}):
+- When they debuted (year, how they started)
+- One surprising fact about their early career
 
-BIO field (3-4 sentences - make readers go "wow I didn't know that!"):
-Pick the most shocking facts from these categories:
-- Death/health crisis: exact cause, age, conspiracy theories if any
-- Song origin story: what real event, trauma, or social issue inspired a famous song
-- Shocking rivalry or public feud with another artist (names, details)
-- Record broken or major award snubbed (specifics)
+BIO field (3-4 sentences in ${langLabel}):
+Write the most shocking, fascinating facts. Be SPECIFIC with real names, years, events:
+- If they died: exact cause, age, location, any controversies or conspiracy theories
+- Famous song origin: what real trauma or event inspired it
+- Famous rivalry or public scandal with specific details
+- A record broken or award snubbed with specifics
 - Behind-the-scenes drama most fans don't know
 
-Be SPECIFIC. Use real names, real years, real events. No vague statements like "broke many records".
-Example of BAD bio: "They broke many records and had controversies."
-Example of GOOD bio: "In 1994, Kurt Cobain was found dead at 27 in his Seattle home — the official cause was suicide, but fans and his mother still believe it was murder. Nirvana's 'Smells Like Teen Spirit' was actually written as a joke mocking the band's own mainstream success."
+BAD example (too vague): "They broke many records and had controversies."
+GOOD example (specific): "1994년 시애틀 자택에서 27세의 나이로 발견된 커트 코베인의 사망은 공식적으로 자살로 처리됐지만, 그의 어머니와 수많은 팬들은 여전히 타살 의혹을 제기하고 있다."
 
-${hasWiki ? `Wikipedia reference:\n${wikiText.slice(0, 1200)}` : `Write from your own knowledge about ${artistName}.`}
-
-Return ONLY this JSON:
+Return ONLY this JSON, no other text:
 {"debut":"...","bio":"..."}`;
 
   const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -62,7 +78,7 @@ Return ONLY this JSON:
     body: JSON.stringify({
       model: 'llama-3.3-70b-versatile',
       max_tokens: 600,
-      temperature: 0.6,
+      temperature: 0.5,
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -91,19 +107,18 @@ export default async function handler(req, res) {
   const langLabel = langMap[language] || 'English';
 
   try {
-    const [wikiData, songs] = await Promise.all([
-      getWikipediaData(artistName),
+    const [imageUrl, songs, info] = await Promise.all([
+      getArtistImage(artistName),
       getLastFmTopTracks(artistName),
+      generateWithGroq(artistName, langLabel),
     ]);
-
-    const info = await generateWithGroq(artistName, wikiData.extract, langLabel);
 
     res.status(200).json({
       artistName,
       debut: info.debut || '',
       bio: info.bio || '',
       songs,
-      imageUrl: wikiData.image || null,
+      imageUrl,
     });
   } catch (e) {
     res.status(500).json({ error: e.message });
